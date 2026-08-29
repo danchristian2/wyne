@@ -135,6 +135,16 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
 
 
 if __name__ == "__main__":
-    question = input("Ask me anything: ")
-    answer = run_agent(question)
-    print("\nAgent:", answer)
+    print("File Assistant - ask me anything about files in a directory(counts, sizes,extentions).")
+    print("Type 'quit' or 'exit' to stop.\n")
+
+    while True:
+        question = input("Ask me anything: ").strip()
+        if question.lower() in ("quit", "exit"):
+            print("Goodbye!")
+            break
+        if not question:
+            print("You didn't ask anything - try again.\n")
+            continue
+        answer = run_agent(question)
+        print("\nAgent", answer, "\n")
