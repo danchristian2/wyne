@@ -137,7 +137,7 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
 if __name__ == "__main__":
     question = input("Ask me anything: ").strip()
     if not question:
-        print("You didn't ask anything-run the script again and ask a question")
+        print("You didn't ask anything-run the script again and ask")
     else:
         answer = run_agent(question)
         print("\nAgent:", answer)
