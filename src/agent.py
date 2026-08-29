@@ -32,19 +32,6 @@ count_files_declaration = types.FunctionDeclaration(
         },
     },
 )
-get_file_size_declaration = types.FunctionDeclaration(
-    name="get_file_size",
-    description="Get the size of a specific file, display in a human readable format",
-    parameters={
-        "type": "object",
-        "properties": {
-            "path": {
-                "type": "string",
-                "description": "Full path to the file to check the size of .",
-            },
-        },
-    },
-)
 
 tools = types.Tool(function_declarations=[count_files_declaration])
 
@@ -72,21 +59,8 @@ def count_files(path: str = ".", extension: str = None, recursive: bool = False)
 
     return json.dumps({"count": count, "files": matched[:20]})  # cap preview list
 
-def get_file_size(path: str) -> str:
-    if not os.path.exists(path):
-        return f"Error: '{path}' does not exist."
 
-    if os.path.isdir(path):
-        return f"Error: '{path}' is a directory not a file use count_files for files."
-    size_bytes=os.path.getsize(path)
-
-    for unit in ["B", "KB", "MB", "GB"]:
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-
-    return f"{size_bytes:.f} TB"
-TOOL_FUNCTIONS = {"count_files": count_files, "get_file_size": get_file_size}
+TOOL_FUNCTIONS = {"count_files": count_files}
 
 
 def run_agent(user_message: str, max_steps: int = 5) -> str:
@@ -96,7 +70,7 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
 
     for step in range(max_steps):
         response = client.models.generate_content(
-            model="gemini-3.1-flash-lite",
+            model="gemini-3.6-flash",
             contents=contents,
             config=types.GenerateContentConfig(tools=[tools]),
         )
@@ -116,12 +90,8 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
         function_response_parts = []
         for call in function_calls:
             print(f"[step {step}] calling tool: {call.name}({dict(call.args)})")
-            if call.name not in TOOL_FUNCTIONS:
-                result = f"ERROR: tool '{call.name}' is not available."
-            else:
-                fn = TOOL_FUNCTIONS[call.name]
-                result = fn(**call.args)
-
+            fn = TOOL_FUNCTIONS[call.name]
+            result = fn(**call.args)
             function_response_parts.append(
                 types.Part.from_function_response(
                     name=call.name,
