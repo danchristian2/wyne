@@ -1,15 +1,15 @@
 
-import os
+import os  # this allows us to interact with files and more
 import json
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from dotenv import load_dotenv  # helps with environment variables
+from google import genai  # helps in gemini model configuration
+from google.genai import types  # importation of types which you will see down
 
-load_dotenv()
+load_dotenv()  # a function that loads dotenv
 
 client = genai.Client(
     api_key=os.environ["GEMINI_API_KEY"],
-)
+)  # initializing the model note that no bese url is required here cause the gemini SDK knows where to send the requests
 
 count_files_declaration = types.FunctionDeclaration(
     name="count_files",
@@ -28,6 +28,19 @@ count_files_declaration = types.FunctionDeclaration(
             "recursive": {
                 "type": "boolean",
                 "description": "Whether to search subdirectories too. Defaults to false.",
+            },
+        },
+    },
+)
+get_file_size_declaration = types.FunctionDeclaration(
+    name="get_file_size",
+    description="Get the size of a specific file, display in a human readable format",
+    parameters={
+        "type": "object",
+        "properties": {
+            "path": {
+                "type": "string",
+                "description": "Full path to the file to check the size of .",
             },
         },
     },
@@ -59,8 +72,21 @@ def count_files(path: str = ".", extension: str = None, recursive: bool = False)
 
     return json.dumps({"count": count, "files": matched[:20]})  # cap preview list
 
+def get_file_size(path: str) -> str:
+    if not os.path.exists(path):
+        return f"Error: '{path}' does not exist."
 
-TOOL_FUNCTIONS = {"count_files": count_files}
+    if os.path.isdir(path):
+        return f"Error: '{path}' is a directory not a file use count_files for files."
+    size_bytes=os.path.getsize(path)
+
+    for unit in ["B", "KB", "MB", "GB"]:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024
+
+    return f"{size_bytes:.f} TB"
+TOOL_FUNCTIONS = {"count_files": count_files, "get_file_size": get_file_size}
 
 
 def run_agent(user_message: str, max_steps: int = 5) -> str:
@@ -70,7 +96,7 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
 
     for step in range(max_steps):
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-3.1-flash-lite",
             contents=contents,
             config=types.GenerateContentConfig(tools=[tools]),
         )
@@ -90,8 +116,12 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
         function_response_parts = []
         for call in function_calls:
             print(f"[step {step}] calling tool: {call.name}({dict(call.args)})")
-            fn = TOOL_FUNCTIONS[call.name]
-            result = fn(**call.args)
+            if call.name not in TOOL_FUNCTIONS:
+                result = f"ERROR: tool '{call.name}' is not available."
+            else:
+                fn = TOOL_FUNCTIONS[call.name]
+                result = fn(**call.args)
+
             function_response_parts.append(
                 types.Part.from_function_response(
                     name=call.name,
