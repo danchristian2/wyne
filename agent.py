@@ -4,12 +4,14 @@ import json
 from dotenv import load_dotenv  # helps with environment variables
 from google import genai  # helps in gemini model configuration
 from google.genai import types  # importation of types which you will see down
-
+from google.genai import errors
 load_dotenv()  # a function that loads dotenv
 
 client = genai.Client(
     api_key=os.environ["GEMINI_API_KEY"],
 )  # initializing the model note that no bese url is required here cause the gemini SDK knows where to send the requests
+
+MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.7-flash"]
 
 count_files_declaration = types.FunctionDeclaration(
     name="count_files",
@@ -94,12 +96,24 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
         types.Content(role="user", parts=[types.Part(text=user_message)])
     ]
 
+    model_index = 0
+
     for step in range(max_steps):
-        response = client.models.generate_content(
-            model="gemini-3.1-flash-lite",
-            contents=contents,
-            config=types.GenerateContentConfig(tools=[tools]),
-        )
+        current_model = MODELS[model_index]
+
+        try:
+            response = client.models.generate_content(
+                model=current_model,
+                contents=contents,
+                config=types.GenerateContentConfig(tools=[tools]),
+            )
+        except errors.ClientError as e:
+            if e.code == 429 and model_index < len(MODELS) - 1:
+                model_index += 1
+                print(f"[step {step}] {current_model} is out of quota switching to {MODELS[model_index]}...")
+                continue
+            else:
+                return f"Error: all models unavailable or an error occured {e}"
 
         candidate = response.candidates[0]
         contents.append(candidate.content)  # record the model's turn
@@ -138,7 +152,7 @@ if __name__ == "__main__":
     print("File Assistant - ask me anything about files in a directory(counts, sizes,extentions).")
     print("Type 'quit' or 'exit' to stop.\n")
 
-<<<<<<< HEAD
+
     question_count = 0
     while True:
         question = input("Ask me anything: ").strip()
