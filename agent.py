@@ -135,6 +135,7 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
 
 
 if __name__ == "__main__":
+    print("File Assistant — ask me about files in a directory (counts, sizes, extensions).")
     question = input("Ask me anything: ").strip()
     if not question:
         print("You didn't ask anything-run the script again and ask")
