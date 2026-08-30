@@ -43,15 +43,16 @@ def get_file_size(path: str) -> str:
 
 def create_file(path: str, content: str = "") -> str:
     if os.path.exists(path):
-        return f"Error: '{path}' already exists. Choose a different name or delete it first."
+        return f"Error: '{path}' already exists.Choose another anme or delete it first"
 
     try:
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
-    except Exception as e:
-        return f"Error creating file: {e}"
 
-    return f"Created '{path}' successfully ({len(content)} characters written)."
+    except Exception as e:
+        return f"Error creating file {e}"
+
+    return f"Created '{path}' successfully ({len(content)} characters written)"
 
 
 TOOL_FUNCTIONS = {
@@ -84,23 +85,4 @@ get_file_size_declaration = types.FunctionDeclaration(
     },
 )
 
-create_file_declaration = types.FunctionDeclaration(
-    name="create_file",
-    description="Create a new file with the given name and optional text content. Refuses to overwrite existing files.",
-    parameters={
-        "type": "object",
-        "properties": {
-            "path": {
-                "type": "string",
-                "description": "Full path (including filename and extension) for the new file, e.g. 'C:/Users/HP/Desktop/notes.txt'.",
-            },
-            "content": {
-                "type": "string",
-                "description": "Optional text content to write into the file. Leave empty for a blank file.",
-            },
-        },
-        "required": ["path"],
-    },
-)
-
-tools = types.Tool(function_declarations=[count_files_declaration, get_file_size_declaration, create_file_declaration])
+tools = types.Tool(function_declarations=[count_files_declaration, get_file_size_declaration])
