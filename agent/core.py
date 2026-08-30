@@ -34,7 +34,14 @@ def run_agent(user_message: str, max_steps: int = 5) -> str:
         function_response_parts = []
         for call in function_calls:
             print(f"[step {step}] calling tool: {call.name}({dict(call.args)})")
-            if call.name not in TOOL_FUNCTIONS:
+
+            if call.name == "delete_file":
+                confirm = input(f"⚠️  Agent wants to delete '{call.args.get('path')}'. Confirm? (y/n): ").strip().lower()
+                if confirm != "y":
+                    result = "User declined the deletion."
+                else:
+                    result = TOOL_FUNCTIONS[call.name](**call.args)
+            elif call.name not in TOOL_FUNCTIONS:
                 result = f"ERROR: tool '{call.name}' is not available."
             else:
                 result = TOOL_FUNCTIONS[call.name](**call.args)
