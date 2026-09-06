@@ -96,7 +96,8 @@ python list_models.py
 - Each question in a session is answered independently — the agent doesn't yet remember earlier questions in the same conversation.
 
 ## Development notes
-
 This project is built one small feature per git branch, tested, then merged — a good habit for isolating changes and being able to safely experiment. See commit history for the order features were added in.
 
 **Important lesson learned the hard way:** commit your work as soon as it's written, even before testing. Uncommitted files aren't protected if you switch or delete branches — several hours were lost re-adding a tool that existed only as an untracked file when a branch was deleted.
+
+**Be happy**
